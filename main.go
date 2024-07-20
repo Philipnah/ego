@@ -2,21 +2,42 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"io"
+	"net/http"
 
 	"github.com/pterm/pterm"
 )
 
 func main() {
-	fmt.Println("Hello, World!")
-	area, _ := pterm.DefaultArea.WithCenter().Start()
-
-	for i := 0; i < 5; i++ {
-			// Update the content of the area with the current count.
-			// The Sprintf function is used to format the string.
-			area.Update(pterm.Sprintf("Current count: %d\nAreas can update their content dynamically!", i))
-
-			// Pause for a second to simulate a time-consuming task.
-			time.Sleep(time.Second)
+	area, err := pterm.DefaultArea.WithCenter().Start("Getting electricity price...")
+	if err != nil {
+		fmt.Print("pterm area could not be created")
+		panic(err)
 	}
+
+	currentPrice, _ := getPrice()
+
+	area.Update(pterm.Sprintf("Electricity price: %s", currentPrice))
+}
+
+func getPrice() (result string, err error) {
+	datasetUrl := "https://api.energidataservice.dk/dataset/DatahubPricelist"
+	apiArguments := "?end=now%2BP1D&sort=ValidFrom%20DESC"
+	apiEndpoint := datasetUrl + apiArguments
+
+	response, err := http.Get(apiEndpoint)
+
+	if err != nil {
+		fmt.Println("Error fetching data from API")
+		return "", err
+	}
+
+	if response.StatusCode != 200 {
+		fmt.Println("Error fetching data from API")
+		fmt.Println("Status code: %i", response.StatusCode)
+	}
+
+	data, _ := io.ReadAll(response.Body)
+
+	return string(data), nil
 }
