@@ -6,20 +6,10 @@ import (
 	"io"
 	"net/http"
 
+	structures "github.com/Philipnah/ego/structures"
+
 	"github.com/pterm/pterm"
 )
-
-type Emissions struct {
-	Total   int
-	Limit   int
-	Dataset string
-	Records []struct {
-		// Minutes5UTC string
-		Minutes5DK  string
-		PriceArea   string
-		CO2Emission float64
-	}
-}
 
 func main() {
 	// Emission stuff
@@ -40,7 +30,7 @@ func main() {
 		panic(err)
 	}
 
-	emissionsData := Emissions{}
+	emissionsData := structures.Emissions{}
 	error := getJson(emissionEndpoint, &emissionsData)
 	if error != nil {
 		panic(error)
