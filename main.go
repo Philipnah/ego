@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,36 +9,58 @@ import (
 	"github.com/pterm/pterm"
 )
 
+type Emissions struct {
+	Total   int
+	Limit   int
+	Dataset string
+	Records []struct {
+		// Minutes5UTC string
+		Minutes5DK  string
+		PriceArea   string
+		CO2Emission float64
+	}
+}
+
 func main() {
+	// Emission stuff
+	emissionUrl := "https://api.energidataservice.dk/dataset/CO2Emis"
+	emissionApiArguments := "?end=now%2BP1D"
+	emissionEndpoint := emissionUrl + emissionApiArguments
+	// end of emission stuff
+	// Price stuff
+	priceUrl := "https://api.energidataservice.dk/dataset/DatahubPricelist"
+	priceApiArguments := "?end=now%2BP1D&sort=ValidFrom%20DESC"
+	priceEndpoint := priceUrl + priceApiArguments
+	fmt.Print(priceEndpoint)
+	// end of price stuff
+
 	area, err := pterm.DefaultArea.WithCenter().Start("Getting electricity price...")
 	if err != nil {
 		fmt.Print("pterm area could not be created")
 		panic(err)
 	}
 
-	currentPrice, _ := getPrice()
+	emissionsData := Emissions{}
+	error := getJson(emissionEndpoint, &emissionsData)
+	if error != nil {
+		panic(error)
+	}
 
-	area.Update(pterm.Sprintf("Electricity price: %s", currentPrice))
+	area.Update(pterm.Sprintf("Electricity price: %v", emissionsData.Records[1].CO2Emission))
 }
 
-func getPrice() (result string, err error) {
-	datasetUrl := "https://api.energidataservice.dk/dataset/DatahubPricelist"
-	apiArguments := "?end=now%2BP1D&sort=ValidFrom%20DESC"
-	apiEndpoint := datasetUrl + apiArguments
-
-	response, err := http.Get(apiEndpoint)
+func getJson(endpoint string, target interface{}) (err error) {
+	response, err := http.Get(endpoint)
 
 	if err != nil {
 		fmt.Println("Error fetching data from API")
-		return "", err
+		return err
 	}
-
 	if response.StatusCode != 200 {
-		fmt.Println("Error fetching data from API")
-		fmt.Println("Status code: %i", response.StatusCode)
+		return fmt.Errorf("Error fetching data from API\nStatus code: %v", response.StatusCode)
 	}
 
-	data, _ := io.ReadAll(response.Body)
+	responseBody, err := io.ReadAll(response.Body)
 
-	return string(data), nil
+	return json.Unmarshal(responseBody, target)
 }
