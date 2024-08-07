@@ -143,6 +143,9 @@ func reduceData(emis *[]float64, time *[]string) (reducedEmis []float64, reduced
 		}
 	}
 
+	reducedEmis = append(reducedEmis, currentEmis/float64(count))
+	reducedTime = append(reducedTime, timeToHour((*time)[len(*time)-1]))
+
 	return reducedEmis, reducedTime
 }
 
