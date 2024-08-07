@@ -19,9 +19,12 @@ func main() {
 	currentTime := time.Now()
 	date := currentTime.Format("2006-01-02")
 
-	emissionApiArguments := "?start=" + date + "&end=now%2BP1D&sort=Minutes5DK%20ASC"
+	emissionDK1Filter := "&filter=%7B%22PriceArea%22:[%22DK1%22]%7D"
+	// emissionDK2Filter := "&filter=%7B%22PriceArea%22:[%22DK2%22]%7D"
+	emissionApiArguments := "?start=" + date + "&end=now%2BP1D&sort=Minutes5DK%20ASC" + emissionDK1Filter
 	emissionEndpoint := emissionUrl + emissionApiArguments
 	// end of emission stuff
+
 	// Price stuff
 	// priceUrl := "https://api.energidataservice.dk/dataset/DatahubPricelist"
 	// priceApiArguments := "?end=now%2BP1D&sort=ValidFrom%20DESC"
@@ -34,7 +37,7 @@ func main() {
 }
 
 func loadEmissions(endpoint string) {
-	spinner, _ := pterm.DefaultSpinner.Start("Current CO2 emissions: ...")
+	spinner, _ := pterm.DefaultSpinner.Start("Fetching & computing 	: ...")
 	spinner.ShowTimer = true
 
 	// Get the json data from the API
@@ -45,9 +48,10 @@ func loadEmissions(endpoint string) {
 	}
 
 	// Get just the emissions number right now
-	currentEmissions, _ := currentEmissions(&emissionsData)
+	latestEmissions, latestTime, _ := currentEmissions(&emissionsData)
+	formattedLatestTime := latestTime[11:16]
 
-	spinner.UpdateText(pterm.Sprintf("Current CO2 emissions: %v g/kWh", currentEmissions))
+	spinner.UpdateText(pterm.Sprintf("CO2 emissions: %v g/kWh @ "+formattedLatestTime, latestEmissions))
 	spinner.Success()
 
 	bars := getBars(&emissionsData)
@@ -72,16 +76,16 @@ func getJson(endpoint string, target interface{}) (err error) {
 	return json.Unmarshal(responseBody, target)
 }
 
-func currentEmissions(data *structures.Emissions) (result float64, err error) {
+func currentEmissions(data *structures.Emissions) (result float64, time string, err error) {
 	// Get the last record in the data to get the current emissions
-	return data.Records[len(data.Records)-1].CO2Emission, nil
+	lastRecord := data.Records[len(data.Records)-1]
+	return lastRecord.CO2Emission, lastRecord.Minutes5DK, nil
 }
 
 func previousEmissions(data *structures.Emissions) (emis []float64, time []string, err error) {
 	emis = make([]float64, len(data.Records))
 	time = make([]string, len(data.Records))
 
-	// TODO: Get only DK1 data
 	// TODO: Combine emissions to hourly averages
 
 	for i, record := range data.Records {
