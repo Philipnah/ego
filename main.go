@@ -115,12 +115,40 @@ func previousEmissions(data *structures.Emissions) (emis []float64, time []strin
 func getBars(data *structures.Emissions) []pterm.Bar {
 	prevEmis, prevTime, _ := previousEmissions(data)
 
+	reducedPrevEmis, reducedPrevTime := reduceData(&prevEmis, &prevTime)
+
 	bars := []pterm.Bar{}
-	for i := 0; i < len(prevEmis); i++ {
-		bars = append(bars, pterm.Bar{Label: prevTime[i], Value: int(prevEmis[i])})
+	for i := 0; i < len(reducedPrevTime); i++ {
+		bars = append(bars, pterm.Bar{Label: reducedPrevTime[i], Value: int(reducedPrevEmis[i])})
 	}
 
 	return bars
+}
+
+// Reduce the data to hourly averages
+func reduceData(emis *[]float64, time *[]string) (reducedEmis []float64, reducedTime []string) {
+	currentHour := timeToHour((*time)[0])
+	currentEmis := 0.0
+	count := 0
+	for i := 0; i < len(*time); i++ {
+		if currentHour == timeToHour((*time)[i]) {
+			count++
+			currentEmis += (*emis)[i]
+		} else {
+			reducedEmis = append(reducedEmis, currentEmis/float64(count))
+			reducedTime = append(reducedTime, timeToHour((*time)[i-1]))
+			currentHour = timeToHour((*time)[i])
+			count = 1
+			currentEmis = (*emis)[i]
+		}
+	}
+
+	return reducedEmis, reducedTime
+}
+
+// takes a timestamp string, returns the hour of the timestamp with an "h" appended
+func timeToHour(time string) (hour string) {
+	return time[11:13] + "h"
 }
 
 func avgEmissions(data *structures.Emissions) (result float64, err error) {
