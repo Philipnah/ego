@@ -47,17 +47,33 @@ func loadEmissions(endpoint string) {
 		panic(error)
 	}
 
-	// Get just the emissions number right now
+	// Get just the latest emissions number & time
 	latestEmissions, latestTime, _ := currentEmissions(&emissionsData)
 	formattedLatestTime := latestTime[11:16]
 
 	spinner.UpdateText(pterm.Sprintf("CO2 emissions: %v g/kWh @ "+formattedLatestTime, latestEmissions))
 	spinner.Success()
 
-	bars := getBars(&emissionsData)
+	// ask user if they want to see the graph
+	if userWantsGraph() {
+		bars := getBars(&emissionsData)
+		pterm.DefaultBarChart.WithHorizontal().WithWidth(16).WithBars(bars).WithShowValue().Render()
+	}
 
-	pterm.DefaultBarChart.WithHorizontal().WithWidth(15).WithBars(bars).WithShowValue().Render()
+}
 
+func userWantsGraph() bool {
+	options := []string{"No", "Yes"}
+
+	// Use PTerm's interactive select feature to present the options to the user and capture their selection
+	// The Show() method displays the options and waits for the user's input
+	selectedOption, _ := pterm.DefaultInteractiveSelect.WithDefaultText("Do you want emissions data for all of today?").WithOptions(options).Show()
+
+	if selectedOption == "Yes" {
+		return true
+	} else {
+		return false
+	}
 }
 
 func getJson(endpoint string, target interface{}) (err error) {
