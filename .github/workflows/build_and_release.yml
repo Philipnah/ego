@@ -33,7 +33,7 @@ jobs:
           fi
 
       - name: Zip release
-        run: 7z a -tzip "ego-${{matrix.os}}-${{matrix.arch}}.zip" "ego"
+        run: 7z a -tzip "ego-${{matrix.os}}-${{matrix.arch}}.zip" "ego*"
 
       - name: Release
         uses: softprops/action-gh-release@v1
