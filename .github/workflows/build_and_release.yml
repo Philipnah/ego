@@ -25,7 +25,12 @@ jobs:
           go-version: "1.22"
 
       - name: Build
-        run: env GOOS=${{matrix.os}} GOARCH=${{matrix.arch}} go build -o ego main.go
+        run: |
+          if [ "${{ matrix.os }}" == "windows" ]; then
+            env GOOS=${{matrix.os}} GOARCH=${{matrix.arch}} go build -o ego.exe main.go
+          else
+            env GOOS=${{matrix.os}} GOARCH=${{matrix.arch}} go build -o ego main.go
+          fi
 
       - name: Zip release
         run: 7z a -tzip "ego-${{matrix.os}}-${{matrix.arch}}.zip" "ego"
