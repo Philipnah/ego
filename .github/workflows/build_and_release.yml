@@ -14,8 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [darwin, windows, linux]
-        arch: [arm64, amd64]
+        #os: [darwin, windows, linux]
+        os: [darwin]
+        #arch: [arm64, amd64]
+        arch: [arm64]
     steps:
       - uses: actions/checkout@v4
 
@@ -28,7 +30,7 @@ jobs:
         run: env GOOS=${{matrix.os}} GOARCH=${{matrix.arch}} go build -o ./bin/${{matrix.os}}/${{matrix.arch}}/ego main.go
 
       - name: Zip release
-        run: 7z a -tzip "ego.zip" "./bin/*"
+        run: 7z a -tzip "ego.zip" "./bin/"
 
       - name: Release
         uses: softprops/action-gh-release@v1
