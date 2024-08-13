@@ -27,8 +27,11 @@ jobs:
       - name: Build
         run: env GOOS=${{matrix.os}} GOARCH=${{matrix.arch}} go build -o ./bin/${{matrix.os}}/${{matrix.arch}}/ego main.go
 
+      - name: Zip release
+        run: 7z a -tzip "${git describe --tags --abbrev=0}.zip" "./bin/*"
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          files: "./bin/*"
+          files: "${git describe --tags --abbrev=0}.zip"
