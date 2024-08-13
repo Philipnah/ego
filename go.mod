@@ -1,6 +1,6 @@
 module github.com/Philipnah/ego
 
-go 1.22.5
+go 1.22
 
 require github.com/pterm/pterm v0.12.79
 
